@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_PIPE } from '@nestjs/core';
 import { KnexModule } from 'nest-knexjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { controllers } from './controllers';
+import { ValidationPipe } from './utils';
 
 const knexOptions = (configService: ConfigService) => ({
   config: {
@@ -21,7 +24,13 @@ const knexOptions = (configService: ConfigService) => ({
     ConfigModule.forRoot({ isGlobal: true }),
     KnexModule.forRoot(knexOptions(new ConfigService())),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [...controllers, AppController],
+  providers: [
+    AppService,
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+    },
+  ],
 })
 export class AppModule {}
