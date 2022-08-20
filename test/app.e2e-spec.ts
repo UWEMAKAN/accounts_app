@@ -28,8 +28,4 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('Hello World!');
   });
-
-  it('/find (GET)', () => {
-    return request(app.getHttpServer()).get('/find').expect(200).expect([]);
-  });
 });

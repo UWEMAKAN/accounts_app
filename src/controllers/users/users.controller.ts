@@ -1,14 +1,22 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { Knex } from 'knex';
-import { InjectConnection } from 'nest-knexjs';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { CreateUserCommand } from '../../commands';
 import { CreateUserRequestDto, CreateUserResponseDto } from '../../dtos';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    @InjectConnection()
-    private readonly knexConnection: Knex,
-  ) {}
+  private readonly logger: Logger;
+
+  constructor(private readonly commandBus: CommandBus) {
+    this.logger = new Logger(UsersController.name);
+  }
 
   /**
    * This endpoint is used for creating users on the system
@@ -20,9 +28,7 @@ export class UsersController {
   async createUser(
     @Body() dto: CreateUserRequestDto,
   ): Promise<CreateUserResponseDto> {
-    const user = new CreateUserResponseDto();
-    user.userId = 1;
-    user.token = dto.email + dto.firstName;
-    return user;
+    this.logger.log(`In ${UsersController.name}.createUser`);
+    return await this.commandBus.execute(new CreateUserCommand(dto));
   }
 }

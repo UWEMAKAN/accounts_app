@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
 import { KnexModule } from 'nest-knexjs';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { commandHandlers } from './commands';
 import { controllers } from './controllers';
+import { services } from './services';
 import { ValidationPipe } from './utils';
 
 const knexOptions = (configService: ConfigService) => ({
@@ -21,12 +23,14 @@ const knexOptions = (configService: ConfigService) => ({
 
 @Module({
   imports: [
+    CqrsModule,
     ConfigModule.forRoot({ isGlobal: true }),
     KnexModule.forRoot(knexOptions(new ConfigService())),
   ],
   controllers: [...controllers, AppController],
   providers: [
-    AppService,
+    ...commandHandlers,
+    ...services,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
