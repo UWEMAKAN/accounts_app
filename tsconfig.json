@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": false
   },
   "exclude": ["./knexfile.ts"],
-  "include": ["./src"]
+  "include": ["./src", "test"]
 }
