@@ -8,11 +8,16 @@ import {
   // UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreateAccountCommand, NewTransactionCommand } from '../../commands';
+import {
+  CreateAccountCommand,
+  NewTransactionCommand,
+  TransferCommand,
+} from '../../commands';
 import {
   CreateAccountRequest,
   GeneralResponse,
   NewTransactionRequest,
+  TransferRequest,
 } from '../../dtos';
 // import { AuthGuard } from '../../utils';
 
@@ -67,5 +72,17 @@ export class AccountsController {
     return await this.commandBus.execute(
       new NewTransactionCommand(dto, 'DEBIT'),
     );
+  }
+
+  /**
+   *  Endpoint for making transfers
+   * @param dto TransferRequest
+   * @returns GeneralResponse
+   */
+  @Post('/transfer')
+  @HttpCode(HttpStatus.OK)
+  async transfer(@Body() dto: TransferRequest): Promise<GeneralResponse> {
+    this.logger.log(`In ${AccountsController.name}.transfer`);
+    return await this.commandBus.execute(new TransferCommand(dto));
   }
 }

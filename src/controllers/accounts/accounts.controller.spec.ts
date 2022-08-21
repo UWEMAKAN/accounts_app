@@ -2,7 +2,11 @@ import { ConfigService } from '@nestjs/config';
 import { CommandBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken } from 'nest-knexjs';
-import { CreateAccountCommand, NewTransactionCommand } from '../../commands';
+import {
+  CreateAccountCommand,
+  NewTransactionCommand,
+  TransferCommand,
+} from '../../commands';
 import { JWTService } from '../../services';
 import { AccountsController } from './accounts.controller';
 
@@ -73,6 +77,20 @@ describe(AccountsController.name, () => {
       const dto = { userId, amount, accountId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
       await controller.withdraw(dto);
+
+      expect.assertions(2);
+      expect(commandBus.execute).toBeCalledTimes(1);
+      expect(commandBus.execute).toBeCalledWith(command);
+    });
+
+    test('should call commandBus.execute for transfer', async () => {
+      const userId = 1;
+      const amount = 1000;
+      const recipientId = 1;
+
+      const dto = { userId, amount, recipientId };
+      const command = new TransferCommand(dto);
+      await controller.transfer(dto);
 
       expect.assertions(2);
       expect(commandBus.execute).toBeCalledTimes(1);

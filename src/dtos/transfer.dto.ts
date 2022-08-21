@@ -1,6 +1,6 @@
 import { IsNumber, IsPositive, Min } from 'class-validator';
 
-export class TransferRequestDto {
+export class TransferRequest {
   /**
    * Amount to transfer
    * @example 1000
