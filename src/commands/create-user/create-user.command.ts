@@ -3,7 +3,7 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { Knex } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import { CreateUserRequestDto, CreateUserResponseDto } from '../../dtos';
-import { JWTPayload, JWTService, PasswordService } from '../../services';
+import { PasswordService } from '../../services';
 import { User } from '../../entities';
 
 export class CreateUserCommand implements ICommand {
@@ -18,7 +18,6 @@ export class CreateUserCommandHandler
   constructor(
     @InjectConnection()
     private readonly connection: Knex,
-    private readonly jwtService: JWTService,
     private readonly passwordService: PasswordService,
   ) {
     this.logger = new Logger(CreateUserCommandHandler.name);
@@ -26,9 +25,28 @@ export class CreateUserCommandHandler
   async execute(command: CreateUserCommand): Promise<CreateUserResponseDto> {
     const { firstName, lastName, email, password } = command.data;
     const { passwordHash, salt } = this.passwordService.hashPassword(password);
-    let insertResults: number[] = [];
+
+    let user: User = null;
     try {
-      insertResults = await this.connection
+      [user] = await this.connection
+        .select('id')
+        .from('users')
+        .where('users.email', email)
+        .limit(1);
+    } catch (err) {
+      this.logger.log(`${JSON.stringify(err)}`);
+      throw new HttpException(
+        'Database error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    if (user) {
+      throw new HttpException('Email already exists', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      await this.connection
         .insert({
           firstName,
           lastName,
@@ -45,31 +63,9 @@ export class CreateUserCommandHandler
       );
     }
 
-    if (insertResults.length !== 1) {
-      throw new HttpException('User creation failed', HttpStatus.BAD_REQUEST);
-    }
-
-    let user: User = null;
-    try {
-      [user] = await this.connection
-        .select('*')
-        .from('users')
-        .where('users.email', email)
-        .limit(1);
-    } catch (err) {
-      this.logger.log(`${JSON.stringify(err)}`);
-      throw new HttpException(
-        'Database error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    const payload: JWTPayload = { id: user.id, email: user.email };
-    const token = this.jwtService.getToken(payload);
-
     const response = new CreateUserResponseDto();
-    response.token = token;
-    response.userId = user.id;
+    response.message = 'User creation successful';
+    response.statusCode = 201;
     return response;
   }
 }
