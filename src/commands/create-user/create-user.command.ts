@@ -2,12 +2,12 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { Knex } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { CreateUserRequestDto, CreateUserResponseDto } from '../../dtos';
+import { CreateUserRequest, GeneralResponse } from '../../dtos';
 import { PasswordService } from '../../services';
 import { User } from '../../entities';
 
 export class CreateUserCommand implements ICommand {
-  constructor(public readonly data: CreateUserRequestDto) {}
+  constructor(public readonly data: CreateUserRequest) {}
 }
 
 @CommandHandler(CreateUserCommand)
@@ -22,7 +22,7 @@ export class CreateUserCommandHandler
   ) {
     this.logger = new Logger(CreateUserCommandHandler.name);
   }
-  async execute(command: CreateUserCommand): Promise<CreateUserResponseDto> {
+  async execute(command: CreateUserCommand): Promise<GeneralResponse> {
     const { firstName, lastName, email, password } = command.data;
     const { passwordHash, salt } = this.passwordService.hashPassword(password);
 
@@ -63,7 +63,7 @@ export class CreateUserCommandHandler
       );
     }
 
-    const response = new CreateUserResponseDto();
+    const response = new GeneralResponse();
     response.message = 'User creation successful';
     response.statusCode = 201;
     return response;

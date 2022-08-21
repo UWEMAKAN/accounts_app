@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { CreateUserCommand } from '../../commands';
-import { CreateUserRequestDto, CreateUserResponseDto } from '../../dtos';
+import { CreateUserRequest, GeneralResponse } from '../../dtos';
 
 @Controller('users')
 export class UsersController {
@@ -20,14 +20,12 @@ export class UsersController {
 
   /**
    * This endpoint is used for creating users on the system
-   * @param dto CreateUserRequestDto
-   * @returns CreateUserResponseDto
+   * @param dto CreateUserRequest
+   * @returns GeneralResponse
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createUser(
-    @Body() dto: CreateUserRequestDto,
-  ): Promise<CreateUserResponseDto> {
+  async createUser(@Body() dto: CreateUserRequest): Promise<GeneralResponse> {
     this.logger.log(`Executing ${UsersController.name}.createUser`);
     return await this.commandBus.execute(new CreateUserCommand(dto));
   }

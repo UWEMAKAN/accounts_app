@@ -2,11 +2,11 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { Knex } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import { CreateAccountRequestDto, CreateAccountResponseDto } from '../../dtos';
+import { CreateAccountRequest, GeneralResponse } from '../../dtos';
 import { Account } from '../../entities';
 
 export class CreateAccountCommand implements ICommand {
-  constructor(public readonly data: CreateAccountRequestDto) {}
+  constructor(public readonly data: CreateAccountRequest) {}
 }
 
 @CommandHandler(CreateAccountCommand)
@@ -22,9 +22,7 @@ export class CreateAccountCommandHandler
     this.logger = new Logger(CreateAccountCommandHandler.name);
   }
 
-  async execute(
-    command: CreateAccountCommand,
-  ): Promise<CreateAccountResponseDto> {
+  async execute(command: CreateAccountCommand): Promise<GeneralResponse> {
     const { userId, openingBalance } = command.data;
     const balance = openingBalance ? openingBalance : 0;
 
@@ -62,7 +60,7 @@ export class CreateAccountCommandHandler
       );
     }
 
-    const response = new CreateAccountResponseDto();
+    const response = new GeneralResponse();
     response.statusCode = 201;
     response.message = 'Account creation successful';
     return response;

@@ -45,12 +45,11 @@ describe(NewTransactionCommandHandler.name, () => {
 
   describe(NewTransactionCommandHandler.name, () => {
     const userId = 1;
-    const accountId = 1;
     const amount = 1000;
 
     test('should add to account balance', async () => {
       const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'CREDIT');
 
       const into = jest.fn();
@@ -58,8 +57,7 @@ describe(NewTransactionCommandHandler.name, () => {
 
       const limit = jest.fn().mockResolvedValue([account]);
 
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
       const table = jest.fn().mockReturnValue({ where });
       const update = jest.fn().mockReturnValue({ table });
 
@@ -73,13 +71,12 @@ describe(NewTransactionCommandHandler.name, () => {
       connection.transaction = jest.fn().mockReturnValue(trx);
 
       const response = await handler.execute(command);
-      expect.assertions(11);
+      expect.assertions(10);
       expect(response.message).toBe('Transaction successful');
       expect(response.statusCode).toBe(200);
       expect(into).toBeCalledTimes(1);
       expect(insert).toBeCalledTimes(1);
       expect(limit).toBeCalledTimes(1);
-      expect(andWhere).toBeCalledTimes(2);
       expect(where).toBeCalledTimes(2);
       expect(table).toBeCalledTimes(1);
       expect(update).toBeCalledTimes(1);
@@ -89,7 +86,7 @@ describe(NewTransactionCommandHandler.name, () => {
 
     test('should subtract from account balance', async () => {
       const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const into = jest.fn();
@@ -97,8 +94,7 @@ describe(NewTransactionCommandHandler.name, () => {
 
       const limit = jest.fn().mockResolvedValue([account]);
 
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
       const table = jest.fn().mockReturnValue({ where });
       const update = jest.fn().mockReturnValue({ table });
 
@@ -112,13 +108,12 @@ describe(NewTransactionCommandHandler.name, () => {
       connection.transaction = jest.fn().mockReturnValue(trx);
 
       const response = await handler.execute(command);
-      expect.assertions(11);
+      expect.assertions(10);
       expect(response.message).toBe('Transaction successful');
       expect(response.statusCode).toBe(200);
       expect(into).toBeCalledTimes(1);
       expect(insert).toBeCalledTimes(1);
       expect(limit).toBeCalledTimes(1);
-      expect(andWhere).toBeCalledTimes(2);
       expect(where).toBeCalledTimes(2);
       expect(table).toBeCalledTimes(1);
       expect(update).toBeCalledTimes(1);
@@ -128,13 +123,11 @@ describe(NewTransactionCommandHandler.name, () => {
 
     test('should fail to find account', async () => {
       const message = 'Database error';
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const limit = jest.fn().mockRejectedValue(new Error(message));
-
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
 
       const from = jest.fn().mockReturnValue({ where });
       const forUpdate = jest.fn().mockReturnValue({ from });
@@ -156,13 +149,11 @@ describe(NewTransactionCommandHandler.name, () => {
 
     test('should find an Invalid Account', async () => {
       const message = 'Invalid Account';
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const limit = jest.fn().mockResolvedValue([]);
-
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
 
       const from = jest.fn().mockReturnValue({ where });
       const forUpdate = jest.fn().mockReturnValue({ from });
@@ -185,13 +176,11 @@ describe(NewTransactionCommandHandler.name, () => {
     test('should fail because of Insufficient balance', async () => {
       const message = 'Insufficient balance';
       const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { accountId, amount: 5000, userId };
+      const dto = { amount: 5000, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const limit = jest.fn().mockResolvedValue([account]);
-
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
 
       const from = jest.fn().mockReturnValue({ where });
       const forUpdate = jest.fn().mockReturnValue({ from });
@@ -214,13 +203,12 @@ describe(NewTransactionCommandHandler.name, () => {
     test('should fail to update account balance', async () => {
       const message = 'Database error';
       const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const limit = jest.fn().mockResolvedValue([account]);
 
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
       const table = jest.fn().mockResolvedValue({ where });
       const update = jest.fn().mockReturnValue({ table });
 
@@ -246,7 +234,7 @@ describe(NewTransactionCommandHandler.name, () => {
     test('should fail fail to insert entry', async () => {
       const message = 'Database error';
       const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { accountId, amount, userId };
+      const dto = { amount, userId };
       const command = new NewTransactionCommand(dto, 'DEBIT');
 
       const into = jest.fn().mockRejectedValue(new Error(message));
@@ -254,8 +242,7 @@ describe(NewTransactionCommandHandler.name, () => {
 
       const limit = jest.fn().mockResolvedValue([account]);
 
-      const andWhere = jest.fn().mockReturnValue({ limit });
-      const where = jest.fn().mockReturnValue({ andWhere });
+      const where = jest.fn().mockReturnValue({ limit });
       const table = jest.fn().mockReturnValue({ where });
       const update = jest.fn().mockReturnValue({ table });
 

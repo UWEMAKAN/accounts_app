@@ -1,13 +1,6 @@
-import {
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsPositive,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsPositive, Min } from 'class-validator';
 
-export class CreateAccountRequestDto {
+export class CreateAccountRequest {
   /**
    * Opening balance for the new account
    * @example 1000
@@ -31,20 +24,4 @@ export class CreateAccountRequestDto {
   @IsInt()
   @Min(1)
   public readonly userId: number;
-}
-
-export class CreateAccountResponseDto {
-  /**
-   * status of the operation
-   * @example 201
-   */
-  @IsInt()
-  statusCode: number;
-
-  /**
-   * Message describing the state of the operation
-   * @example 'Account creation successful'
-   */
-  @IsString()
-  message: string;
 }
