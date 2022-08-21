@@ -1,14 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken } from 'nest-knexjs';
-import {
-  NewTransactionCommand,
-  NewTransactionCommandHandler,
-} from './new-transaction.command';
+import { TransferCommand, TransferCommandHandler } from './transfer.command';
 
-describe(NewTransactionCommandHandler.name, () => {
+describe(TransferCommandHandler.name, () => {
   let module: TestingModule;
-  let handler: NewTransactionCommandHandler;
+  let handler: TransferCommandHandler;
 
   const trx = {
     select: jest.fn(),
@@ -25,13 +22,11 @@ describe(NewTransactionCommandHandler.name, () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       providers: [
-        NewTransactionCommandHandler,
+        TransferCommandHandler,
         { provide: getConnectionToken(), useValue: connection },
       ],
     }).compile();
-    handler = module.get<NewTransactionCommandHandler>(
-      NewTransactionCommandHandler,
-    );
+    handler = module.get<TransferCommandHandler>(TransferCommandHandler);
   });
 
   afterEach(async () => {
@@ -39,18 +34,15 @@ describe(NewTransactionCommandHandler.name, () => {
     await module.close();
   });
 
-  test(`${NewTransactionCommandHandler.name} should be defined`, () => {
+  test(`${TransferCommandHandler.name} should be defined`, () => {
     expect(handler).toBeDefined();
   });
 
-  describe(NewTransactionCommandHandler.name, () => {
-    const userId = 1;
-    const amount = 1000;
-
-    test('should add to account balance', async () => {
-      const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'CREDIT');
+  describe(`${TransferCommandHandler.name}.execute`, () => {
+    test('should transfer successfully', async () => {
+      const dto = { amount: 1000, userId: 1, recipientId: 2 };
+      const account = { id: 1, balance: 2000 };
+      const command = new TransferCommand(dto);
 
       const into = jest.fn();
       const insert = jest.fn().mockReturnValue({ into });
@@ -72,23 +64,23 @@ describe(NewTransactionCommandHandler.name, () => {
 
       const response = await handler.execute(command);
       expect.assertions(11);
-      expect(response.message).toBe('Transaction successful');
+      expect(response.message).toBe('Transfer successful');
       expect(response.statusCode).toBe(200);
-      expect(into).toBeCalledTimes(1);
-      expect(insert).toBeCalledTimes(1);
-      expect(limit).toBeCalledTimes(1);
-      expect(where).toBeCalledTimes(2);
-      expect(table).toBeCalledTimes(1);
-      expect(update).toBeCalledTimes(1);
-      expect(forUpdate).toBeCalledTimes(1);
-      expect(select).toBeCalledTimes(1);
+      expect(into).toBeCalledTimes(2);
+      expect(insert).toBeCalledTimes(2);
+      expect(limit).toBeCalledTimes(2);
+      expect(where).toBeCalledTimes(4);
+      expect(table).toBeCalledTimes(2);
+      expect(update).toBeCalledTimes(2);
+      expect(forUpdate).toBeCalledTimes(2);
+      expect(select).toBeCalledTimes(2);
       expect(trx.commit).toBeCalledTimes(1);
     });
 
-    test('should subtract from account balance', async () => {
-      const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
+    test('should transfer successfully', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const account = { id: 1, balance: 2000 };
+      const command = new TransferCommand(dto);
 
       const into = jest.fn();
       const insert = jest.fn().mockReturnValue({ into });
@@ -110,84 +102,45 @@ describe(NewTransactionCommandHandler.name, () => {
 
       const response = await handler.execute(command);
       expect.assertions(11);
-      expect(response.message).toBe('Transaction successful');
+      expect(response.message).toBe('Transfer successful');
       expect(response.statusCode).toBe(200);
-      expect(into).toBeCalledTimes(1);
-      expect(insert).toBeCalledTimes(1);
-      expect(limit).toBeCalledTimes(1);
-      expect(where).toBeCalledTimes(2);
-      expect(table).toBeCalledTimes(1);
-      expect(update).toBeCalledTimes(1);
-      expect(forUpdate).toBeCalledTimes(1);
-      expect(select).toBeCalledTimes(1);
+      expect(into).toBeCalledTimes(2);
+      expect(insert).toBeCalledTimes(2);
+      expect(limit).toBeCalledTimes(2);
+      expect(where).toBeCalledTimes(4);
+      expect(table).toBeCalledTimes(2);
+      expect(update).toBeCalledTimes(2);
+      expect(forUpdate).toBeCalledTimes(2);
+      expect(select).toBeCalledTimes(2);
       expect(trx.commit).toBeCalledTimes(1);
     });
 
-    test('should fail to find account', async () => {
-      const message = 'Database error';
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
-
-      const limit = jest.fn().mockRejectedValue(new Error(message));
-      const where = jest.fn().mockReturnValue({ limit });
-
-      const from = jest.fn().mockReturnValue({ where });
-      const forUpdate = jest.fn().mockReturnValue({ from });
-      const select = jest.fn().mockReturnValue({ forUpdate });
-
-      trx.select = select;
-      connection.transaction = jest.fn().mockResolvedValue(trx);
+    test('should fail to transfer', async () => {
+      const dto = { amount: 1000, userId: 1, recipientId: 1 };
+      const message = 'Cannot transfer';
+      const command = new TransferCommand(dto);
 
       try {
         await handler.execute(command);
       } catch (err) {
-        expect.assertions(2);
+        expect.assertions(1);
         expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR),
+          new HttpException(message, HttpStatus.BAD_REQUEST),
         );
-        expect(trx.rollback).toBeCalledTimes(1);
       }
     });
 
-    test('should find an Invalid Account', async () => {
-      const message = 'Invalid Account';
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
-
-      const limit = jest.fn().mockResolvedValue([]);
-      const where = jest.fn().mockReturnValue({ limit });
-
-      const from = jest.fn().mockReturnValue({ where });
-      const forUpdate = jest.fn().mockReturnValue({ from });
-      const select = jest.fn().mockReturnValue({ forUpdate });
-
-      trx.select = select;
-      connection.transaction = jest.fn().mockResolvedValue(trx);
-
-      try {
-        await handler.execute(command);
-      } catch (err) {
-        expect.assertions(2);
-        expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR),
-        );
-        expect(trx.rollback).toBeCalledTimes(1);
-      }
-    });
-
-    test('should fail because of Insufficient balance', async () => {
+    test('should fail to transfer because of insufficient balance', async () => {
       const message = 'Insufficient balance';
-      const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { amount: 5000, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
+      const dto = { amount: 3000, userId: 2, recipientId: 1 };
+      const account = { id: 1, balance: 1000 };
+      const command = new TransferCommand(dto);
 
       const limit = jest.fn().mockResolvedValue([account]);
       const where = jest.fn().mockReturnValue({ limit });
-
       const from = jest.fn().mockReturnValue({ where });
       const forUpdate = jest.fn().mockReturnValue({ from });
       const select = jest.fn().mockReturnValue({ forUpdate });
-
       trx.select = select;
       connection.transaction = jest.fn().mockResolvedValue(trx);
 
@@ -196,17 +149,50 @@ describe(NewTransactionCommandHandler.name, () => {
       } catch (err) {
         expect.assertions(2);
         expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR),
+          new HttpException(message, HttpStatus.BAD_REQUEST),
+        );
+        expect(trx.rollback).toBeCalledTimes(1);
+      }
+    });
+
+    test('should fail to insert a new entry', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const account = { id: 1, balance: 3000 };
+      const command = new TransferCommand(dto);
+      const message = 'Database error';
+
+      const into = jest.fn().mockRejectedValue(new Error(message));
+      const insert = jest.fn().mockReturnValue({ into });
+
+      const limit = jest.fn().mockResolvedValue([account]);
+      const where = jest.fn().mockReturnValue({ limit });
+      const from = jest.fn().mockReturnValue({ where });
+      const forUpdate = jest.fn().mockReturnValue({ from });
+      const select = jest.fn().mockReturnValue({ forUpdate });
+
+      trx.select = select;
+      trx.insert = insert;
+      connection.transaction = jest.fn().mockResolvedValue(trx);
+
+      try {
+        await handler.execute(command);
+      } catch (err) {
+        expect.assertions(2);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.BAD_REQUEST),
         );
         expect(trx.rollback).toBeCalledTimes(1);
       }
     });
 
     test('should fail to update account balance', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const account = { id: 1, balance: 3000 };
+      const command = new TransferCommand(dto);
       const message = 'Database error';
-      const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
+
+      const into = jest.fn();
+      const insert = jest.fn().mockReturnValue({ into });
 
       const limit = jest.fn().mockResolvedValue([account]);
 
@@ -218,6 +204,7 @@ describe(NewTransactionCommandHandler.name, () => {
       const forUpdate = jest.fn().mockReturnValue({ from });
       const select = jest.fn().mockReturnValue({ forUpdate });
 
+      trx.insert = insert;
       trx.select = select;
       trx.update = update;
       connection.transaction = jest.fn().mockResolvedValue(trx);
@@ -227,22 +214,21 @@ describe(NewTransactionCommandHandler.name, () => {
       } catch (err) {
         expect.assertions(2);
         expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR),
+          new HttpException(message, HttpStatus.BAD_REQUEST),
         );
         expect(trx.rollback).toBeCalledTimes(1);
       }
     });
 
-    test('should fail fail to insert entry', async () => {
+    test('should fail to retrieve account', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const command = new TransferCommand(dto);
       const message = 'Database error';
-      const account = { id: 1, balance: 2000, userId: 1 };
-      const dto = { amount, userId };
-      const command = new NewTransactionCommand(dto, 'DEBIT');
 
-      const into = jest.fn().mockRejectedValue(new Error(message));
+      const into = jest.fn();
       const insert = jest.fn().mockReturnValue({ into });
 
-      const limit = jest.fn().mockResolvedValue([account]);
+      const limit = jest.fn().mockRejectedValue(new Error(message));
 
       const where = jest.fn().mockReturnValue({ limit });
       const table = jest.fn().mockReturnValue({ where });
@@ -262,7 +248,41 @@ describe(NewTransactionCommandHandler.name, () => {
       } catch (err) {
         expect.assertions(2);
         expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.INTERNAL_SERVER_ERROR),
+          new HttpException(message, HttpStatus.BAD_REQUEST),
+        );
+        expect(trx.rollback).toBeCalledTimes(1);
+      }
+    });
+
+    test('should fail to retrieve account', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const command = new TransferCommand(dto);
+      const message = 'Invalid Account';
+
+      const into = jest.fn();
+      const insert = jest.fn().mockReturnValue({ into });
+
+      const limit = jest.fn().mockResolvedValue([]);
+
+      const where = jest.fn().mockReturnValue({ limit });
+      const table = jest.fn().mockReturnValue({ where });
+      const update = jest.fn().mockReturnValue({ table });
+
+      const from = jest.fn().mockReturnValue({ where });
+      const forUpdate = jest.fn().mockReturnValue({ from });
+      const select = jest.fn().mockReturnValue({ forUpdate });
+
+      trx.insert = insert;
+      trx.select = select;
+      trx.update = update;
+      connection.transaction = jest.fn().mockResolvedValue(trx);
+
+      try {
+        await handler.execute(command);
+      } catch (err) {
+        expect.assertions(2);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.BAD_REQUEST),
         );
         expect(trx.rollback).toBeCalledTimes(1);
       }

@@ -5,20 +5,23 @@ import {
   HttpStatus,
   Logger,
   Post,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { NewTransactionCommand } from '../../commands';
-import { CreateAccountCommand } from '../../commands/create-account/create-account.command';
 import {
-  CreateAccountRequestDto,
-  CreateAccountResponseDto,
-  NewTransactionRequestDto,
-  NewTransactionResponseDto,
+  CreateAccountCommand,
+  NewTransactionCommand,
+  TransferCommand,
+} from '../../commands';
+import {
+  CreateAccountRequest,
+  GeneralResponse,
+  NewTransactionRequest,
+  TransferRequest,
 } from '../../dtos';
-import { AuthGuard } from '../../utils';
+// import { AuthGuard } from '../../utils';
 
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 @Controller('accounts')
 export class AccountsController {
   private readonly logger: Logger;
@@ -30,27 +33,27 @@ export class AccountsController {
   /**
    * This is endpoint allows a user to create a new account
    * @param dto CreateAccountRequestDto
-   * @returns CreateAccountResponseDto
+   * @returns GeneralResponse
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async createAccount(
-    @Body() dto: CreateAccountRequestDto,
-  ): Promise<CreateAccountResponseDto> {
+    @Body() dto: CreateAccountRequest,
+  ): Promise<GeneralResponse> {
     this.logger.log(`Executing ${AccountsController.name}.createAccount`);
     return await this.commandBus.execute(new CreateAccountCommand(dto));
   }
 
   /**
    * Endpoint for funding an account
-   * @param dto NewTransactionRequestDto
-   * @returns NewTransactionResponseDto
+   * @param dto NewTransactionRequest
+   * @returns GeneralResponse
    */
   @Post('/fund')
   @HttpCode(HttpStatus.OK)
   async fundAccount(
-    @Body() dto: NewTransactionRequestDto,
-  ): Promise<NewTransactionResponseDto> {
+    @Body() dto: NewTransactionRequest,
+  ): Promise<GeneralResponse> {
     this.logger.log(`In ${AccountsController.name}.fundAccount`);
     return await this.commandBus.execute(
       new NewTransactionCommand(dto, 'CREDIT'),
@@ -59,17 +62,27 @@ export class AccountsController {
 
   /**
    * Endpoint for withdrawing from an account
-   * @param dto NewTransactionRequestDto
-   * @returns NewTransactionResponseDto
+   * @param dto NewTransactionRequest
+   * @returns GeneralResponse
    */
-  @Post('/fund')
+  @Post('/withdraw')
   @HttpCode(HttpStatus.OK)
-  async withdraw(
-    @Body() dto: NewTransactionRequestDto,
-  ): Promise<NewTransactionResponseDto> {
+  async withdraw(@Body() dto: NewTransactionRequest): Promise<GeneralResponse> {
     this.logger.log(`In ${AccountsController.name}.withdraw`);
     return await this.commandBus.execute(
       new NewTransactionCommand(dto, 'DEBIT'),
     );
+  }
+
+  /**
+   *  Endpoint for making transfers
+   * @param dto TransferRequest
+   * @returns GeneralResponse
+   */
+  @Post('/transfer')
+  @HttpCode(HttpStatus.OK)
+  async transfer(@Body() dto: TransferRequest): Promise<GeneralResponse> {
+    this.logger.log(`In ${AccountsController.name}.transfer`);
+    return await this.commandBus.execute(new TransferCommand(dto));
   }
 }

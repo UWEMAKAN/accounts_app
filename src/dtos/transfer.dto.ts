@@ -1,8 +1,8 @@
-import { IsInt, IsNumber, IsPositive, Min } from 'class-validator';
+import { IsNumber, IsPositive, Min } from 'class-validator';
 
-export class NewTransactionRequest {
+export class TransferRequest {
   /**
-   * Amount to fund account with
+   * Amount to transfer
    * @example 1000
    */
   @IsNumber(
@@ -17,10 +17,18 @@ export class NewTransactionRequest {
   public readonly amount: number;
 
   /**
-   * id of the user funding account
+   * id of user sending funds
    * @example 1
    */
-  @IsInt()
+  @IsNumber()
   @Min(1)
   public readonly userId: number;
+
+  /**
+   * id of user receiving funds
+   * @example 2
+   */
+  @IsNumber()
+  @Min(1)
+  public readonly recipientId: number;
 }

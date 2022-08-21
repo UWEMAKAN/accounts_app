@@ -2,16 +2,13 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { Knex } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
-import {
-  NewTransactionRequestDto,
-  NewTransactionResponseDto,
-} from '../../dtos';
+import { NewTransactionRequest, GeneralResponse } from '../../dtos';
 import { Account } from '../../entities';
 import { TransactionType } from '../../utils/types';
 
 export class NewTransactionCommand implements ICommand {
   constructor(
-    public readonly data: NewTransactionRequestDto,
+    public readonly data: NewTransactionRequest,
     public readonly type: TransactionType,
   ) {}
 }
@@ -29,11 +26,9 @@ export class NewTransactionCommandHandler
     this.logger = new Logger(NewTransactionCommandHandler.name);
   }
 
-  async execute(
-    command: NewTransactionCommand,
-  ): Promise<NewTransactionResponseDto> {
+  async execute(command: NewTransactionCommand): Promise<GeneralResponse> {
     const {
-      data: { amount, userId, accountId },
+      data: { amount, userId },
       type,
     } = command;
 
@@ -45,8 +40,7 @@ export class NewTransactionCommandHandler
         .select('*')
         .forUpdate()
         .from('accounts')
-        .where('accounts.id', accountId)
-        .andWhere('accounts.userId', userId)
+        .where('accounts.userId', userId)
         .limit(1);
     } catch (err) {
       this.logger.log(JSON.stringify(err));
@@ -72,8 +66,7 @@ export class NewTransactionCommandHandler
       await trx
         .update({ balance: account.balance + amountToAdd })
         .table('accounts')
-        .where('accounts.id', accountId)
-        .andWhere('accounts.userId', userId);
+        .where('accounts.id', account.id);
     } catch (err) {
       this.logger.log(JSON.stringify(err));
       await trx.rollback();
@@ -87,7 +80,7 @@ export class NewTransactionCommandHandler
       await trx
         .insert({
           amount: amountToAdd,
-          accountId,
+          accountId: account.id,
         })
         .into('entries');
     } catch (err) {
@@ -101,7 +94,7 @@ export class NewTransactionCommandHandler
 
     await trx.commit();
 
-    const response = new NewTransactionResponseDto();
+    const response = new GeneralResponse();
     response.message = 'Transaction successful';
     response.statusCode = 200;
     return response;

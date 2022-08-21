@@ -1,6 +1,6 @@
 import { IsEmail, IsInt, IsJWT, IsString, MinLength } from 'class-validator';
 
-export class CreateUserRequestDto {
+export class CreateUserRequest {
   /**
    * First name of the user to be created
    * @example 'Bender'
@@ -33,23 +33,7 @@ export class CreateUserRequestDto {
   public readonly password: string;
 }
 
-export class CreateUserResponseDto {
-  /**
-   * status of the operation
-   * @example 201
-   */
-  @IsInt()
-  statusCode: number;
-
-  /**
-   * Message describing the state of the operation
-   * @example 'User creation successful'
-   */
-  @IsString()
-  message: string;
-}
-
-export class CreateUseResponseDto {
+export class CreateUseResponse {
   /**
    * The id of the newly created user
    * @example 1
