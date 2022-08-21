@@ -28,7 +28,7 @@ export class UsersController {
   async createUser(
     @Body() dto: CreateUserRequestDto,
   ): Promise<CreateUserResponseDto> {
-    this.logger.log(`In ${UsersController.name}.createUser`);
+    this.logger.log(`Executing ${UsersController.name}.createUser`);
     return await this.commandBus.execute(new CreateUserCommand(dto));
   }
 }
