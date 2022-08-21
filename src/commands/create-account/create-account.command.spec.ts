@@ -1,15 +1,14 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getConnectionToken } from 'nest-knexjs';
-import { PasswordService } from '../../services';
 import {
-  CreateUserCommand,
-  CreateUserCommandHandler,
-} from './create-user.command';
-import { HttpException, HttpStatus } from '@nestjs/common';
+  CreateAccountCommand,
+  CreateAccountCommandHandler,
+} from './create-account.command';
 
-describe(CreateUserCommandHandler.name, () => {
+describe(CreateAccountCommandHandler.name, () => {
   let module: TestingModule;
-  let handler: CreateUserCommandHandler;
+  let handler: CreateAccountCommandHandler;
 
   const connection = {
     select: jest.fn(),
@@ -19,13 +18,14 @@ describe(CreateUserCommandHandler.name, () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       providers: [
-        CreateUserCommandHandler,
-        PasswordService,
-        { provide: getConnectionToken('default'), useValue: connection },
+        CreateAccountCommandHandler,
+        { provide: getConnectionToken(), useValue: connection },
       ],
     }).compile();
 
-    handler = module.get<CreateUserCommandHandler>(CreateUserCommandHandler);
+    handler = module.get<CreateAccountCommandHandler>(
+      CreateAccountCommandHandler,
+    );
   });
 
   afterEach(async () => {
@@ -33,19 +33,15 @@ describe(CreateUserCommandHandler.name, () => {
     await module.close();
   });
 
-  test(`${CreateUserCommandHandler.name} should be defined`, () => {
+  test(`${CreateAccountCommandHandler.name} should be defined`, () => {
     expect(handler).toBeDefined();
   });
 
-  describe(`${CreateUserCommandHandler.name}.execute`, () => {
-    const firstName = 'Bender';
-    const lastName = 'Rodriguez';
-    const email = 'bender.rodriguez@futura.ma';
-    const password = 'PlanetOmicron';
+  describe(CreateAccountCommandHandler.name, () => {
+    const userId = 1;
+    const openingBalance = 1000;
 
-    test('should create a new user successfully', async () => {
-      const message = 'User creation successful';
-
+    test('should create an account successfully', async () => {
       const into = jest.fn().mockResolvedValue([1]);
       const insert = jest.fn().mockReturnValue({ into });
 
@@ -57,14 +53,11 @@ describe(CreateUserCommandHandler.name, () => {
       connection.insert = insert;
       connection.select = select;
 
-      const command = new CreateUserCommand({
-        firstName,
-        lastName,
-        email,
-        password,
-      });
+      const dto = { userId, openingBalance };
+      const command = new CreateAccountCommand(dto);
 
       const response = await handler.execute(command);
+
       expect.assertions(8);
       expect(into).toBeCalledTimes(1);
       expect(insert).toBeCalledTimes(1);
@@ -72,8 +65,36 @@ describe(CreateUserCommandHandler.name, () => {
       expect(from).toBeCalledTimes(1);
       expect(where).toBeCalledTimes(1);
       expect(limit).toBeCalledTimes(1);
+      expect(response.message).toBe('Account creation successful');
       expect(response.statusCode).toBe(201);
-      expect(response.message).toBe(message);
+    });
+
+    test('should create an account successfully with default opening balance', async () => {
+      const into = jest.fn().mockResolvedValue([1]);
+      const insert = jest.fn().mockReturnValue({ into });
+
+      const limit = jest.fn().mockResolvedValue([]);
+      const where = jest.fn().mockReturnValue({ limit });
+      const from = jest.fn().mockReturnValue({ where });
+      const select = jest.fn().mockReturnValue({ from });
+
+      connection.insert = insert;
+      connection.select = select;
+
+      const dto = { userId };
+      const command = new CreateAccountCommand(dto);
+
+      const response = await handler.execute(command);
+
+      expect.assertions(8);
+      expect(into).toBeCalledTimes(1);
+      expect(insert).toBeCalledTimes(1);
+      expect(select).toBeCalledTimes(1);
+      expect(from).toBeCalledTimes(1);
+      expect(where).toBeCalledTimes(1);
+      expect(limit).toBeCalledTimes(1);
+      expect(response.message).toBe('Account creation successful');
+      expect(response.statusCode).toBe(201);
     });
 
     test('should fail when reading from database', async () => {
@@ -84,12 +105,8 @@ describe(CreateUserCommandHandler.name, () => {
       const select = jest.fn().mockReturnValue({ from });
       connection.select = select;
 
-      const command = new CreateUserCommand({
-        firstName,
-        lastName,
-        email,
-        password,
-      });
+      const dto = { userId, openingBalance };
+      const command = new CreateAccountCommand(dto);
 
       try {
         await handler.execute(command);
@@ -101,21 +118,17 @@ describe(CreateUserCommandHandler.name, () => {
       }
     });
 
-    test('should fail because email already exists', async () => {
-      const message = 'Email already exists';
-      const user = { id: 1, firstName, lastName, email };
-      const limit = jest.fn().mockResolvedValue([user]);
+    test('should fail because account already exists', async () => {
+      const message = 'Account already exists';
+      const account = { id: 1, balance: openingBalance, userId };
+      const limit = jest.fn().mockResolvedValue([account]);
       const where = jest.fn().mockReturnValue({ limit });
       const from = jest.fn().mockReturnValue({ where });
       const select = jest.fn().mockReturnValue({ from });
       connection.select = select;
 
-      const command = new CreateUserCommand({
-        firstName,
-        lastName,
-        email,
-        password,
-      });
+      const dto = { userId, openingBalance };
+      const command = new CreateAccountCommand(dto);
 
       try {
         await handler.execute(command);
@@ -139,12 +152,8 @@ describe(CreateUserCommandHandler.name, () => {
       connection.insert = insert;
       connection.select = select;
 
-      const command = new CreateUserCommand({
-        firstName,
-        lastName,
-        email,
-        password,
-      });
+      const dto = { userId, openingBalance };
+      const command = new CreateAccountCommand(dto);
 
       try {
         await handler.execute(command);

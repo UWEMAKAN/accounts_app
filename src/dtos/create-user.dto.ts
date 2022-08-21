@@ -35,6 +35,22 @@ export class CreateUserRequestDto {
 
 export class CreateUserResponseDto {
   /**
+   * status of the operation
+   * @example 201
+   */
+  @IsInt()
+  statusCode: number;
+
+  /**
+   * Message describing the state of the operation
+   * @example 'User creation successful'
+   */
+  @IsString()
+  message: string;
+}
+
+export class CreateUseResponseDto {
+  /**
    * The id of the newly created user
    * @example 1
    */

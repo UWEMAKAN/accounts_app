@@ -20,7 +20,7 @@ export async function up(knex: Knex): Promise<void> {
       'accounts',
       (table: Knex.CreateTableBuilder) => {
         table.increments('id').primary();
-        table.integer('userId').unsigned().notNullable();
+        table.integer('userId').unsigned().notNullable().unique();
         table.foreign('userId').references('id').inTable('users');
         table.decimal('balance', 2).defaultTo(0).notNullable();
         table.timestamps(true, true, true);
