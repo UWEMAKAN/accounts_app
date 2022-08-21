@@ -5,7 +5,7 @@ import {
   HttpStatus,
   Logger,
   Post,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { NewTransactionCommand } from '../../commands';
@@ -16,9 +16,9 @@ import {
   NewTransactionRequestDto,
   NewTransactionResponseDto,
 } from '../../dtos';
-import { AuthGuard } from '../../utils';
+// import { AuthGuard } from '../../utils';
 
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 @Controller('accounts')
 export class AccountsController {
   private readonly logger: Logger;
@@ -62,7 +62,7 @@ export class AccountsController {
    * @param dto NewTransactionRequestDto
    * @returns NewTransactionResponseDto
    */
-  @Post('/fund')
+  @Post('/withdraw')
   @HttpCode(HttpStatus.OK)
   async withdraw(
     @Body() dto: NewTransactionRequestDto,

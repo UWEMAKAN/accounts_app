@@ -1,12 +1,19 @@
-import { IsInt, IsNumber, IsString, Min } from 'class-validator';
+import { IsInt, IsNumber, IsPositive, IsString, Min } from 'class-validator';
 
 export class NewTransactionRequestDto {
   /**
    * Amount to fund account with
    * @example 1000
    */
-  @IsNumber()
-  @Min(1)
+  @IsNumber(
+    {
+      allowInfinity: false,
+      allowNaN: false,
+      maxDecimalPlaces: 2,
+    },
+    { message: 'amount must be greater 0 with 2 decimal places max' },
+  )
+  @IsPositive()
   public readonly amount: number;
 
   /**
