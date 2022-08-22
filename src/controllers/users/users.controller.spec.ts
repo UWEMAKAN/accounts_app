@@ -1,6 +1,6 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateUserCommand } from '../../commands';
+import { CreateUserCommand, LoginCommand } from '../../commands';
 import { UsersController } from './users.controller';
 
 describe(UsersController.name, () => {
@@ -38,6 +38,21 @@ describe(UsersController.name, () => {
       const dto = { firstName, lastName, email, password };
       const command = new CreateUserCommand(dto);
       await controller.createUser(dto);
+
+      expect.assertions(2);
+      expect(commandBus.execute).toBeCalledTimes(1);
+      expect(commandBus.execute).toBeCalledWith(command);
+    });
+  });
+
+  describe(`${UsersController.name}.login`, () => {
+    test('should call commandBus.execute', async () => {
+      const email = 'bender.rodriguez@futura.ma';
+      const password = 'PlanetOmicron';
+
+      const dto = { email, password };
+      const command = new LoginCommand(dto);
+      await controller.login(dto);
 
       expect.assertions(2);
       expect(commandBus.execute).toBeCalledTimes(1);

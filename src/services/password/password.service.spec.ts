@@ -28,4 +28,17 @@ describe(PasswordService.name, () => {
     expect(typeof passwordHash).toBe('string');
     expect(typeof salt).toBe('string');
   });
+
+  it('should compare password hash and return true', () => {
+    const password = 'Password';
+    const { passwordHash, salt } = service.hashPassword(password);
+    const response = service.verifyPassword(password, salt, passwordHash);
+    expect.assertions(6);
+    expect(response).toBe(true);
+    expect(crypto.randomBytes).toBeCalledTimes(1);
+    expect(crypto.createHash).toBeCalledTimes(1);
+    expect(crypto.createHmac).toBeCalledTimes(2);
+    expect(typeof passwordHash).toBe('string');
+    expect(typeof salt).toBe('string');
+  });
 });

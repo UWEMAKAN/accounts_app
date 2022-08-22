@@ -31,15 +31,19 @@ export class AuthGuard implements CanActivate {
   }
 
   private async validateRequest(request: Request) {
-    const [bearer, token] = request.headers.authorization.split(' ');
+    const { authorization } = request.headers;
+    if (!authorization) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    const [bearer, token] = authorization.split(' ');
     if (bearer.toLowerCase() !== 'bearer' || !isJWT(token)) {
-      return false;
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
     const id = await this.jwtService.verifyToken(token);
     const { userId } = request.body;
     if (userId !== id) {
-      return false;
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
     let user: User = null;
@@ -58,7 +62,7 @@ export class AuthGuard implements CanActivate {
     }
 
     if (!user) {
-      return false;
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
     return true;
