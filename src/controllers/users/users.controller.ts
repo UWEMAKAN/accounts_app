@@ -1,25 +1,34 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Logger,
+  Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreateUserCommand, LoginCommand } from '../../commands';
+import { UserDetailsQuery } from '../../queries';
 import {
   CreateUserRequest,
   GeneralResponse,
   LoginRequest,
   LoginResponse,
+  UserDetailsResponse,
 } from '../../dtos';
+import { AuthGuard } from '../../utils/guards/auth/auth.guard';
 
 @Controller('users')
 export class UsersController {
   private readonly logger: Logger;
 
-  constructor(private readonly commandBus: CommandBus) {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {
     this.logger = new Logger(UsersController.name);
   }
 
@@ -45,5 +54,20 @@ export class UsersController {
   async login(@Body() dto: LoginRequest): Promise<LoginResponse> {
     this.logger.log(`Executing ${UsersController.name}.login`);
     return await this.commandBus.execute(new LoginCommand(dto));
+  }
+
+  /**
+   * Endpoint to get user details
+   * @param id number
+   * @returns UserDetailsResponse
+   */
+  @Get('/:userId')
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async userDetails(
+    @Param('userId') userId: number,
+  ): Promise<UserDetailsResponse> {
+    this.logger.log(`Executing ${UsersController.name}.userDetails`);
+    return await this.queryBus.execute(new UserDetailsQuery(+userId));
   }
 }

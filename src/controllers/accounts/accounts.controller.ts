@@ -8,13 +8,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { NewTransactionCommand, TransferCommand } from '../../commands';
 import {
-  CreateAccountCommand,
-  NewTransactionCommand,
-  TransferCommand,
-} from '../../commands';
-import {
-  CreateAccountRequest,
   GeneralResponse,
   NewTransactionRequest,
   TransferRequest,
@@ -28,20 +23,6 @@ export class AccountsController {
 
   constructor(private readonly commandBus: CommandBus) {
     this.logger = new Logger(AccountsController.name);
-  }
-
-  /**
-   * This is endpoint allows a user to create a new account
-   * @param dto CreateAccountRequestDto
-   * @returns GeneralResponse
-   */
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async createAccount(
-    @Body() dto: CreateAccountRequest,
-  ): Promise<GeneralResponse> {
-    this.logger.log(`Executing ${AccountsController.name}.createAccount`);
-    return await this.commandBus.execute(new CreateAccountCommand(dto));
   }
 
   /**
