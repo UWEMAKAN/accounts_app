@@ -18,4 +18,14 @@ export class PasswordService {
 
     return { passwordHash, salt };
   }
+
+  verifyPassword(
+    password: string,
+    salt: string,
+    passwordHash: string,
+  ): boolean {
+    const hmac = createHmac('sha256', salt);
+    const hash = hmac.update(password).digest().toString('base64');
+    return hash === passwordHash;
+  }
 }

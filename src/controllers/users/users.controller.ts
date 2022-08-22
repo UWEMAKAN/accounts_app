@@ -7,8 +7,13 @@ import {
   Post,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreateUserCommand } from '../../commands';
-import { CreateUserRequest, GeneralResponse } from '../../dtos';
+import { CreateUserCommand, LoginCommand } from '../../commands';
+import {
+  CreateUserRequest,
+  GeneralResponse,
+  LoginRequest,
+  LoginResponse,
+} from '../../dtos';
 
 @Controller('users')
 export class UsersController {
@@ -28,5 +33,17 @@ export class UsersController {
   async createUser(@Body() dto: CreateUserRequest): Promise<GeneralResponse> {
     this.logger.log(`Executing ${UsersController.name}.createUser`);
     return await this.commandBus.execute(new CreateUserCommand(dto));
+  }
+
+  /**
+   * Login endpoint
+   * @param dto LoginRequest
+   * @returns LoginResponse
+   */
+  @Post('/login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() dto: LoginRequest): Promise<LoginResponse> {
+    this.logger.log(`Executing ${UsersController.name}.login`);
+    return await this.commandBus.execute(new LoginCommand(dto));
   }
 }

@@ -5,7 +5,7 @@ import {
   HttpStatus,
   Logger,
   Post,
-  // UseGuards,
+  UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -19,9 +19,9 @@ import {
   NewTransactionRequest,
   TransferRequest,
 } from '../../dtos';
-// import { AuthGuard } from '../../utils';
+import { AuthGuard } from '../../utils';
 
-// @UseGuards(AuthGuard)
+@UseGuards(AuthGuard)
 @Controller('accounts')
 export class AccountsController {
   private readonly logger: Logger;
