@@ -58,7 +58,7 @@ export class UsersController {
 
   /**
    * Endpoint to get user details
-   * @param id number
+   * @param userId number
    * @returns UserDetailsResponse
    */
   @Get('/:userId')
