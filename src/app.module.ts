@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { KnexModule } from 'nest-knexjs';
 import { commandHandlers } from './commands';
 import { controllers } from './controllers';
 import { queryHandlers } from './queries';
 import { services } from './services';
-import { ValidationPipe } from './utils';
+import { LoggingInterceptor, ValidationPipe } from './utils';
 
 const knexOptions = (configService: ConfigService) => ({
   config: {
@@ -35,6 +35,10 @@ const knexOptions = (configService: ConfigService) => ({
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
     },
   ],
 })
