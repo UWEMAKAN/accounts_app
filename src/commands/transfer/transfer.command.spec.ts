@@ -66,8 +66,8 @@ describe(TransferCommandHandler.name, () => {
       expect.assertions(11);
       expect(response.message).toBe('Transfer successful');
       expect(response.statusCode).toBe(200);
-      expect(into).toBeCalledTimes(2);
-      expect(insert).toBeCalledTimes(2);
+      expect(into).toBeCalledTimes(3);
+      expect(insert).toBeCalledTimes(3);
       expect(limit).toBeCalledTimes(2);
       expect(where).toBeCalledTimes(4);
       expect(table).toBeCalledTimes(2);
@@ -104,8 +104,8 @@ describe(TransferCommandHandler.name, () => {
       expect.assertions(11);
       expect(response.message).toBe('Transfer successful');
       expect(response.statusCode).toBe(200);
-      expect(into).toBeCalledTimes(2);
-      expect(insert).toBeCalledTimes(2);
+      expect(into).toBeCalledTimes(3);
+      expect(insert).toBeCalledTimes(3);
       expect(limit).toBeCalledTimes(2);
       expect(where).toBeCalledTimes(4);
       expect(table).toBeCalledTimes(2);
@@ -275,6 +275,40 @@ describe(TransferCommandHandler.name, () => {
       trx.insert = insert;
       trx.select = select;
       trx.update = update;
+      connection.transaction = jest.fn().mockResolvedValue(trx);
+
+      try {
+        await handler.execute(command);
+      } catch (err) {
+        expect.assertions(2);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.BAD_REQUEST),
+        );
+        expect(trx.rollback).toBeCalledTimes(1);
+      }
+    });
+
+    test('should fail to insert transfer record', async () => {
+      const dto = { amount: 1000, userId: 2, recipientId: 1 };
+      const account = { id: 1, balance: 3000 };
+      const command = new TransferCommand(dto);
+      const message = 'Database error';
+
+      const into = jest.fn();
+      const insert = jest
+        .fn()
+        .mockReturnValueOnce({ into })
+        .mockReturnValueOnce({ into })
+        .mockReturnValueOnce(new Error(message));
+
+      const limit = jest.fn().mockResolvedValue([account]);
+      const where = jest.fn().mockReturnValue({ limit });
+      const from = jest.fn().mockReturnValue({ where });
+      const forUpdate = jest.fn().mockReturnValue({ from });
+      const select = jest.fn().mockReturnValue({ forUpdate });
+
+      trx.select = select;
+      trx.insert = insert;
       connection.transaction = jest.fn().mockResolvedValue(trx);
 
       try {

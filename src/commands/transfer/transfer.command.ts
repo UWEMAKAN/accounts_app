@@ -53,12 +53,49 @@ export class TransferCommandHandler
     await this.createEntry(fromAccount.id, -amount, trx);
     await this.createEntry(toAccount.id, amount, trx);
 
+    await this.createTransfer(
+      trx,
+      fromAccount.id,
+      toAccount.id,
+      fromAccount.userId,
+      toAccount.userId,
+      amount,
+    );
+
     await trx.commit();
 
     const response = new GeneralResponse();
     response.message = 'Transfer successful';
     response.statusCode = 200;
     return response;
+  }
+
+  private async createTransfer(
+    trx: Knex.Transaction,
+    fromAccountId: number,
+    toAccountId: number,
+    senderId: number,
+    recipientId: number,
+    amount: number,
+  ) {
+    try {
+      await trx
+        .insert({
+          fromAccountId,
+          toAccountId,
+          senderId,
+          recipientId,
+          amount,
+        })
+        .into('transfers');
+    } catch (err) {
+      this.logger.log(JSON.stringify(err));
+      await trx.rollback();
+      throw new HttpException(
+        'Database error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   private async createEntry(

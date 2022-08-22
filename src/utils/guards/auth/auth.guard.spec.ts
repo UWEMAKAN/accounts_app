@@ -65,7 +65,35 @@ describe(AuthGuard.name, () => {
           getRequest: () => ({
             body: { userId: 1 },
             headers: { authorization: `Bearer ${token}` },
-            method: 'POST',
+          }),
+        }),
+      } as ExecutionContext;
+
+      const response = await guard.canActivate(context);
+      expect.assertions(5);
+      expect(response).toBeTruthy();
+      expect(select).toBeCalledTimes(1);
+      expect(from).toBeCalledTimes(1);
+      expect(where).toBeCalledTimes(1);
+      expect(limit).toBeCalledTimes(1);
+    });
+
+    test('should return true', async () => {
+      const payload = { id: 1 };
+      const token = jwtService.getToken(payload);
+
+      const limit = jest.fn().mockResolvedValue([payload]);
+      const where = jest.fn().mockReturnValue({ limit });
+      const from = jest.fn().mockReturnValue({ where });
+      const select = jest.fn().mockReturnValue({ from });
+      connection.select = select;
+
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            params: { userId: 1 },
+            body: {},
+            headers: { authorization: `Bearer ${token}` },
           }),
         }),
       } as ExecutionContext;
@@ -108,6 +136,29 @@ describe(AuthGuard.name, () => {
           getRequest: () => ({
             body: { userId: 1 },
             headers: { authorization: `Basic ${token}` },
+          }),
+        }),
+      } as ExecutionContext;
+
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
+    });
+
+    test('should throw error if userId does not match', async () => {
+      const payload = { id: 1 };
+      const token = jwtService.getToken(payload);
+
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            body: { userId: 2 },
+            headers: { authorization: `Bearer ${token}` },
           }),
         }),
       } as ExecutionContext;

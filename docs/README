@@ -1,7 +1,0 @@
-# API DESIGN DOCUMENTATION
-
-This document is the specification for an accounting backend service.
-
-## Endpoints
-
-The following endpoints will be exposed on the backend

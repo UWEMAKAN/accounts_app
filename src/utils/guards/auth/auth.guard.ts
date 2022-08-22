@@ -42,6 +42,11 @@ export class AuthGuard implements CanActivate {
 
     const id = await this.jwtService.verifyToken(token);
 
+    const userId = request.body.userId || +request.params.userId;
+    if (userId !== id) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
     let user: User = null;
     try {
       [user] = await this.connection
