@@ -48,6 +48,8 @@ describe(AuthGuard.name, () => {
   });
 
   describe(AuthGuard.name, () => {
+    const message = 'Unauthorized';
+
     test('should return true', async () => {
       const payload = { id: 1 };
       const token = jwtService.getToken(payload);
@@ -76,7 +78,27 @@ describe(AuthGuard.name, () => {
       expect(limit).toBeCalledTimes(1);
     });
 
-    test('should return false if token type is not bearer', async () => {
+    test('should throw error if authorization header is not set', async () => {
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            body: { userId: 1 },
+            headers: {},
+          }),
+        }),
+      } as ExecutionContext;
+
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
+    });
+
+    test('should throw error if token type is not bearer', async () => {
       const payload = { id: 1 };
       const token = jwtService.getToken(payload);
 
@@ -89,12 +111,17 @@ describe(AuthGuard.name, () => {
         }),
       } as ExecutionContext;
 
-      const response = await guard.canActivate(context);
-      expect.assertions(1);
-      expect(response).toBeFalsy();
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
     });
 
-    test('should return false if token is a JWT', async () => {
+    test('should throw error if token is a JWT', async () => {
       const token = 'not a jwt';
 
       const context = {
@@ -106,12 +133,17 @@ describe(AuthGuard.name, () => {
         }),
       } as ExecutionContext;
 
-      const response = await guard.canActivate(context);
-      expect.assertions(1);
-      expect(response).toBeFalsy();
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
     });
 
-    test('should return false if userId does not match', async () => {
+    test('should throw error if userId does not match', async () => {
       const payload = { id: 1 };
       const token = jwtService.getToken(payload);
 
@@ -124,12 +156,17 @@ describe(AuthGuard.name, () => {
         }),
       } as ExecutionContext;
 
-      const response = await guard.canActivate(context);
-      expect.assertions(1);
-      expect(response).toBeFalsy();
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
     });
 
-    test('should return false if user does not exist', async () => {
+    test('should throw error if user does not exist', async () => {
       const payload = { id: 1 };
       const token = jwtService.getToken(payload);
 
@@ -148,9 +185,14 @@ describe(AuthGuard.name, () => {
         }),
       } as ExecutionContext;
 
-      const response = await guard.canActivate(context);
-      expect.assertions(1);
-      expect(response).toBeFalsy();
+      try {
+        await guard.canActivate(context);
+      } catch (err) {
+        expect.assertions(1);
+        expect(err).toStrictEqual(
+          new HttpException(message, HttpStatus.UNAUTHORIZED),
+        );
+      }
     });
 
     test('should throw an error when there is a connection problem', async () => {
