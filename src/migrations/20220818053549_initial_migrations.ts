@@ -11,7 +11,6 @@ export async function up(knex: Knex): Promise<void> {
         table.string('salt').notNullable();
         table.string('firstName').notNullable();
         table.string('lastName').notNullable();
-        table.timestamps(true, true, true);
       },
     ));
 
@@ -23,7 +22,6 @@ export async function up(knex: Knex): Promise<void> {
         table.integer('userId').unsigned().notNullable().unique();
         table.foreign('userId').references('id').inTable('users');
         table.double('balance', 16, 2).defaultTo(0).notNullable();
-        table.timestamps(true, true, true);
       },
     ));
 
@@ -35,7 +33,6 @@ export async function up(knex: Knex): Promise<void> {
         table.integer('accountId').unsigned().notNullable();
         table.foreign('accountId').references('id').inTable('accounts');
         table.double('amount', 16, 2).notNullable();
-        table.timestamps(true, true, true);
       },
     ));
 
@@ -53,7 +50,6 @@ export async function up(knex: Knex): Promise<void> {
         table.integer('recipientId').unsigned().notNullable();
         table.foreign('recipientId').references('id').inTable('users');
         table.double('amount', 16, 2).unsigned().notNullable();
-        table.timestamps(true, true, true);
       },
     ));
 }
