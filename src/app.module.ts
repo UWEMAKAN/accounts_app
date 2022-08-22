@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_PIPE } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { KnexModule } from 'nest-knexjs';
-import { AppController } from './app.controller';
 import { commandHandlers } from './commands';
 import { controllers } from './controllers';
 import { queryHandlers } from './queries';
@@ -28,7 +27,7 @@ const knexOptions = (configService: ConfigService) => ({
     ConfigModule.forRoot({ isGlobal: true }),
     KnexModule.forRoot(knexOptions(new ConfigService())),
   ],
-  controllers: [...controllers, AppController],
+  controllers: [...controllers],
   providers: [
     ...commandHandlers,
     ...queryHandlers,

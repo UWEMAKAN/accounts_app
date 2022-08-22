@@ -65,6 +65,7 @@ describe(AuthGuard.name, () => {
           getRequest: () => ({
             body: { userId: 1 },
             headers: { authorization: `Bearer ${token}` },
+            method: 'POST',
           }),
         }),
       } as ExecutionContext;
@@ -128,29 +129,6 @@ describe(AuthGuard.name, () => {
         switchToHttp: () => ({
           getRequest: () => ({
             body: { userId: 1 },
-            headers: { authorization: `Bearer ${token}` },
-          }),
-        }),
-      } as ExecutionContext;
-
-      try {
-        await guard.canActivate(context);
-      } catch (err) {
-        expect.assertions(1);
-        expect(err).toStrictEqual(
-          new HttpException(message, HttpStatus.UNAUTHORIZED),
-        );
-      }
-    });
-
-    test('should throw error if userId does not match', async () => {
-      const payload = { id: 1 };
-      const token = jwtService.getToken(payload);
-
-      const context = {
-        switchToHttp: () => ({
-          getRequest: () => ({
-            body: { userId: 2 },
             headers: { authorization: `Bearer ${token}` },
           }),
         }),

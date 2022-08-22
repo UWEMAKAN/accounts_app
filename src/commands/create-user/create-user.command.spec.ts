@@ -6,6 +6,7 @@ import {
   CreateUserCommandHandler,
 } from './create-user.command';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 
 describe(CreateUserCommandHandler.name, () => {
   let module: TestingModule;
@@ -15,12 +16,16 @@ describe(CreateUserCommandHandler.name, () => {
     select: jest.fn(),
     insert: jest.fn(),
   };
+  const commandBus = {
+    execute: jest.fn(),
+  };
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
       providers: [
         CreateUserCommandHandler,
         PasswordService,
+        { provide: CommandBus, useValue: commandBus },
         { provide: getConnectionToken('default'), useValue: connection },
       ],
     }).compile();
@@ -45,11 +50,15 @@ describe(CreateUserCommandHandler.name, () => {
 
     test('should create a new user successfully', async () => {
       const message = 'User creation successful';
+      const user = { id: 1 };
 
       const into = jest.fn().mockResolvedValue([1]);
       const insert = jest.fn().mockReturnValue({ into });
 
-      const limit = jest.fn().mockResolvedValue([]);
+      const limit = jest
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([user]);
       const where = jest.fn().mockReturnValue({ limit });
       const from = jest.fn().mockReturnValue({ where });
       const select = jest.fn().mockReturnValue({ from });
@@ -65,15 +74,16 @@ describe(CreateUserCommandHandler.name, () => {
       });
 
       const response = await handler.execute(command);
-      expect.assertions(8);
+      expect.assertions(9);
       expect(into).toBeCalledTimes(1);
       expect(insert).toBeCalledTimes(1);
-      expect(select).toBeCalledTimes(1);
-      expect(from).toBeCalledTimes(1);
-      expect(where).toBeCalledTimes(1);
-      expect(limit).toBeCalledTimes(1);
+      expect(select).toBeCalledTimes(2);
+      expect(from).toBeCalledTimes(2);
+      expect(where).toBeCalledTimes(2);
+      expect(limit).toBeCalledTimes(2);
       expect(response.statusCode).toBe(201);
       expect(response.message).toBe(message);
+      expect(commandBus.execute).toBeCalledTimes(1);
     });
 
     test('should fail when reading from database', async () => {

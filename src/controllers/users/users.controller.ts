@@ -17,6 +17,7 @@ import {
   GeneralResponse,
   LoginRequest,
   LoginResponse,
+  UserDetailsResponse,
 } from '../../dtos';
 import { AuthGuard } from '../../utils/guards/auth/auth.guard';
 
@@ -58,13 +59,15 @@ export class UsersController {
   /**
    * Endpoint to get user details
    * @param id number
-   * @returns UserDetailsQuery
+   * @returns UserDetailsResponse
    */
-  @Get('/:id')
+  @Get('/:userId')
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
-  async userDetails(@Param('id') id: number): Promise<UserDetailsQuery> {
+  async userDetails(
+    @Param('userId') userId: number,
+  ): Promise<UserDetailsResponse> {
     this.logger.log(`Executing ${UsersController.name}.userDetails`);
-    return await this.queryBus.execute(new UserDetailsQuery(+id));
+    return await this.queryBus.execute(new UserDetailsQuery(+userId));
   }
 }
