@@ -6,6 +6,7 @@ import { KnexModule } from 'nest-knexjs';
 import { AppController } from './app.controller';
 import { commandHandlers } from './commands';
 import { controllers } from './controllers';
+import { queryHandlers } from './queries';
 import { services } from './services';
 import { ValidationPipe } from './utils';
 
@@ -30,6 +31,7 @@ const knexOptions = (configService: ConfigService) => ({
   controllers: [...controllers, AppController],
   providers: [
     ...commandHandlers,
+    ...queryHandlers,
     ...services,
     {
       provide: APP_PIPE,
